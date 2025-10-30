@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { AppSettings } from '../types';
 
@@ -36,7 +35,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
         // --- DYNAMIC SETTINGS OVERRIDE LOGIC ---
         // This is a powerful feature that allows for on-the-fly branding and theming.
-        const params = new URLSearchParams(window.location.search);
+        // It correctly parses parameters from the URL's hash fragment (e.g., #/page?logoUrl=...).
+        const hash = window.location.hash;
+        const queryString = hash.includes('?') ? hash.split('?')[1] : '';
+        const params = new URLSearchParams(queryString);
 
         // 1. Override theme settings
         // If the settings file has a 'theme' object, iterate over its keys.

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import Sidebar from './components/Sidebar';
@@ -8,30 +7,31 @@ import { Menu } from 'lucide-react';
 
 /**
  * Finds the most specific navigation item that matches the current URL hash.
- * This allows for "deep linking" where the browser URL can contain both the
- * application route and a hash for the iframe's internal routing.
- * For example, if href is `#/clientarea.html#details` and a navLink has href `#/clientarea.html`,
- * this function will correctly identify it as a match and return the remaining `#details` part.
- * 
+ * This function is designed to handle complex hashes that can contain the application
+ * route, query parameters, and a hash for the iframe's internal routing.
+ * For example, if the browser hash is `#/clientarea.html?id=123#details`, this function
+ * will correctly match a navLink with `href: "#/clientarea.html"` and return the
+ * remaining `?id=123#details` part for further processing.
+ *
  * @param navItems - The array of all navigation items from settings.
  * @param href - The current URL hash from the browser's address bar.
- * @returns An object containing the matched `navLink` and the leftover `iframeHash`, or undefined if no match is found.
+ * @returns An object containing the matched `navLink` and the `remainingPart` of the hash, or undefined if no match is found.
  */
-const findNavItemByHref = (navItems: NavItem[], href: string): { navLink: NavLink, iframeHash: string } | undefined => {
-    let bestMatch: { navLink: NavLink, iframeHash:string } | undefined = undefined;
+const findNavItemByHref = (navItems: NavItem[], href: string): { navLink: NavLink, remainingPart: string } | undefined => {
+    let bestMatch: { navLink: NavLink, remainingPart:string } | undefined = undefined;
 
     // Helper to check a single NavLink item
     const checkItem = (item: NavLink) => {
         // Check if the current browser hash starts with the item's defined href.
         if (href.startsWith(item.href)) {
             // This check prevents partial matches (e.g., `/foo` matching `/foobar`).
-            // A valid match is either exact or followed by a '#' for the iframe's hash.
+            // A valid match is either exact or followed by a '?' (for params) or '#' (for iframe hash).
             const nextChar = href[item.href.length];
-            if (nextChar === undefined || nextChar === '#') {
+            if (nextChar === undefined || nextChar === '#' || nextChar === '?') {
                 // If this match is more specific (longer) than a previous match, it's better.
                 if (!bestMatch || item.href.length > bestMatch.navLink.href.length) {
-                    const iframeHash = href.substring(item.href.length);
-                    bestMatch = { navLink: item, iframeHash };
+                    const remainingPart = href.substring(item.href.length);
+                    bestMatch = { navLink: item, remainingPart };
                 }
             }
         }
@@ -109,7 +109,7 @@ const useMediaQuery = (query: string): boolean => {
  * It handles security checks, parameter pass-through, and loading states.
  */
 const PageContent: React.FC = () => {
-    const { hash } = useLocation(); // Gets the current URL hash (e.g., "#/my-services.html")
+    const { hash } = useLocation(); // Gets the current URL hash (e.g., "#/my-services.html?id=1")
     const { settings } = useSettings(); // Accesses the loaded application settings.
     const [finalIframeUrl, setFinalIframeUrl] = useState<string | null>(null);
     const [securityError, setSecurityError] = useState<string | null>(null);
@@ -121,11 +121,11 @@ const PageContent: React.FC = () => {
     const targetHash = hash === '#/' ? defaultHref : hash;
     const match = findNavItemByHref(navItems, targetHash);
     const activeItem = match?.navLink;
-    const iframeHash = match?.iframeHash ?? ''; // The part of the hash to pass to the iframe
+    const remainingPartFromHash = match?.remainingPart ?? ''; // The part of the hash after the matched route (e.g., "?id=1#details")
     const iframeUrl = activeItem?.iframeUrl; // The base URL for the iframe from settings.json
 
 
-    // This effect runs whenever the iframe URL or its hash changes.
+    // This effect runs whenever the iframe URL or its parameters/hash change.
     // It constructs the final, secure URL and handles all logic related to it.
     useEffect(() => {
         if (!iframeUrl) {
@@ -163,13 +163,18 @@ const PageContent: React.FC = () => {
             }
         }
 
-        // **Parameter Pass-through**: Append all query params from the main browser URL to the iframe URL.
-        const mainPageParams = new URLSearchParams(window.location.search);
-        mainPageParams.forEach((value, key) => {
+        // **Advanced Parameter Pass-through**:
+        // 1. Get params and hash from the main URL's fragment identifier.
+        const [queryPart, hashPart] = remainingPartFromHash.split('#');
+        const paramsFromHash = new URLSearchParams(queryPart.startsWith('?') ? queryPart.substring(1) : '');
+        const iframeHash = hashPart ? `#${hashPart}` : '';
+
+        // 2. Append all found params to the iframe URL.
+        paramsFromHash.forEach((value, key) => {
             finalUrl.searchParams.append(key, value);
         });
 
-        // Append the specific hash fragment for the iframe.
+        // 3. Append the specific hash fragment for the iframe.
         if (iframeHash) {
             finalUrl.hash = iframeHash;
         }
@@ -177,7 +182,7 @@ const PageContent: React.FC = () => {
         setFinalIframeUrl(finalUrl.toString());
         setSecurityError(null);
 
-    }, [iframeUrl, iframeHash, settings?.security?.allowedIframeDomains]);
+    }, [iframeUrl, remainingPartFromHash, settings?.security?.allowedIframeDomains]);
 
 
     if (securityError) {

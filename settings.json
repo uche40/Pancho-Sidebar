@@ -15,7 +15,7 @@
   },
   "sidebar": {
     "defaultState": "collapsed",
-    "logoUrl": "https://mypancho.com/account/assets/img/pancho_favicon-150x150.png",
+    "logoUrl": "https://mypancho.com/account/assets/img/logo.png",
     "profile": {
       "href": "#/account-settings.html",
       "name": "Profile",

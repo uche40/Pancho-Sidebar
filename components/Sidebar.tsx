@@ -124,7 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <div className="p-4 pb-2 flex items-center justify-between">
                         <img
                             src={settings.logoUrl}
-                            className="w-10"
+                            className="h-10 w-auto max-w-full"
                             alt="Logo"
                         />
                         <button
@@ -151,11 +151,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onMouseLeave={() => !isExpanded && setIsHovering(false)}
             >
                 <div className={`p-4 pb-2 flex items-center ${isEffectivelyExpanded ? "justify-between" : "justify-center"}`}>
-                    <img
-                        src={settings.logoUrl}
-                        className={`overflow-hidden transition-[width] duration-300 ease-out ${isEffectivelyExpanded ? "w-10" : "w-0"}`}
-                        alt="Logo"
-                    />
+                    <div className={`overflow-hidden transition-[max-width] duration-300 ease-out ${isEffectivelyExpanded ? "max-w-32" : "max-w-0"}`}>
+                        <img
+                            src={settings.logoUrl}
+                            className="h-10 w-auto"
+                            alt="Logo"
+                        />
+                    </div>
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="p-1.5 rounded-lg bg-secondary hover:bg-muted"
