@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modern Dashboard Sidebar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                DEFAULT: 'var(--color-primary, hsl(222.2 47.4% 11.2%))',
+                foreground: 'var(--color-primary-foreground, hsl(210 40% 98%))',
+              },
+              secondary: {
+                DEFAULT: 'var(--color-secondary, hsl(210 40% 96.1%))',
+                foreground: 'var(--color-secondary-foreground, hsl(222.2 84% 4.9%))',
+              },
+              muted: {
+                DEFAULT: 'var(--color-muted, hsl(210 40% 96.1%))',
+                foreground: 'var(--color-muted-foreground, hsl(215.4 16.3% 46.9%))',
+              },
+              border: 'var(--color-border, hsl(214.3 31.8% 91.4%))',
+            },
+            keyframes: {
+              'collapsible-down': {
+                from: { height: '0' },
+                to: { height: 'var(--radix-collapsible-content-height)' },
+              },
+              'collapsible-up': {
+                from: { height: 'var(--radix-collapsible-content-height)' },
+                to: { height: '0' },
+              },
+            },
+            animation: {
+              'collapsible-down': 'collapsible-down 0.2s ease-out',
+              'collapsible-up': 'collapsible-up 0.2s ease-out',
+            },
+          }
+        }
+      }
+    </script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/framer-motion@11.2.10/dist/framer-motion.es.js"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^12.23.24",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.548.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-secondary">
+    <div id="root"></div>
+  </body>
+</html>

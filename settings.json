@@ -1,0 +1,223 @@
+{
+  "theme": {
+    "primary": "hsl(220, 13%, 61%)",
+    "primary-foreground": "hsl(210, 40%, 98%)",
+    "secondary": "hsl(210, 40%, 96.1%)",
+    "secondary-foreground": "hsl(222.2, 84%, 4.9%)",
+    "muted": "hsl(210, 40%, 96.1%)",
+    "muted-foreground": "hsl(215.4, 16.3%, 46.9%)",
+    "border": "hsl(214.3, 31.8%, 91.4%)"
+  },
+  "security": {
+    "allowedIframeDomains": [
+      "mypancho.com"
+    ]
+  },
+  "sidebar": {
+    "defaultState": "collapsed",
+    "logoUrl": "https://raw.githubusercontent.com/m-a-j-i-d/testing/main/pancho_favicon-150x150.png",
+    "profile": {
+      "href": "#/account-settings.html",
+      "name": "Profile",
+      "role": "Account Settings",
+      "icon": "UserCircle"
+    },
+    "navItems": [
+      {
+        "type": "link",
+        "href": "#/index.html",
+        "label": "Homepage",
+        "icon": "Home",
+        "iframeUrl": "https://mypancho.com/account/homepage.php"
+      },
+      {
+        "type": "link",
+        "href": "#/my-services.html",
+        "label": "My Orders",
+        "icon": "Globe",
+        "iframeUrl": "https://mypancho.com/account/clientarea.php?action=services"
+      },
+      {
+        "type": "link",
+        "href": "#/templates.html",
+        "label": "Browse Templates",
+        "icon": "LayoutGrid",
+        "iframeUrl": "https://mypancho.com/cms/products"
+      },
+      {
+        "type": "link",
+        "href": "#/my-invoices.html",
+        "label": "Make A Payment",
+        "icon": "Tag",
+        "iframeUrl": "https://mypancho.com/account/clientarea.php?action=invoices"
+      },
+      {
+        "type": "header",
+        "label": "Manage Account"
+      },
+      {
+        "type": "submenu",
+        "path": "account-dashboard",
+        "label": "My Account",
+        "icon": "User",
+        "children": [
+          {
+            "type": "link",
+            "href": "#/clientarea.html",
+            "label": "Account Dashboard",
+            "icon": "LayoutDashboard",
+            "iframeUrl": "https://mypancho.com/account/clientarea.php"
+          },
+          {
+            "type": "link",
+            "href": "#/account-settings.html",
+            "label": "Account Settings",
+            "icon": "Sliders",
+            "iframeUrl": "https://mypancho.com/account/clientarea.php?action=details"
+          },
+          {
+            "type": "link",
+            "href": "#/payment-methods.html",
+            "label": "Payment Methods",
+            "icon": "CreditCard",
+            "iframeUrl": "https://mypancho.com/account/account/paymentmethods"
+          }
+        ]
+      },
+      {
+        "type": "submenu",
+        "path": "manage-billing",
+        "label": "Manage Billing",
+        "icon": "Wallet",
+        "children": [
+          {
+            "type": "link",
+            "href": "#/my-invoices-billing.html",
+            "label": "My Invoices",
+            "icon": "Receipt",
+            "iframeUrl": "https://mypancho.com/account/clientarea.php?action=invoices"
+          },
+          {
+            "type": "link",
+            "href": "#/my-orders.html",
+            "label": "My Orders",
+            "icon": "History",
+            "iframeUrl": "https://mypancho.com/account/clientarea.php?action=services"
+          },
+          {
+            "type": "link",
+            "href": "#/add-funds.html",
+            "label": "Add Funds",
+            "icon": "Coins",
+            "iframeUrl": "https://mypancho.com/account/clientarea.php?action=addfunds"
+          }
+        ]
+      },
+      {
+        "type": "header",
+        "label": "Help & Information"
+      },
+      {
+        "type": "submenu",
+        "path": "support",
+        "label": "Support",
+        "icon": "Headset",
+        "children": [
+          {
+            "type": "link",
+            "href": "#/open-support-ticket.html",
+            "label": "Open Support Ticket",
+            "icon": "PlusCircle",
+            "iframeUrl": "https://mypancho.com/account/supporttickets.php"
+          },
+          {
+            "type": "link",
+            "href": "#/view-tickets.html",
+            "label": "View My Tickets",
+            "icon": "Ticket",
+            "iframeUrl": "https://mypancho.com/account/supporttickets.php"
+          },
+          {
+            "type": "link",
+            "href": "#/live-meeting.html",
+            "label": "Live Meeting",
+            "icon": "Video",
+            "iframeUrl": "https://mypancho.com/chat/Pancho/chat/"
+          },
+          {
+            "type": "link",
+            "href": "#/knowledgebase.html",
+            "label": "Knowledgebase",
+            "icon": "Book",
+            "iframeUrl": "https://mypancho.com/account/knowledgebase"
+          },
+          {
+            "type": "link",
+            "href": "#/downloads.html",
+            "label": "Downloads",
+            "icon": "Download",
+            "iframeUrl": "https://mypancho.com/account/downloads.php"
+          }
+        ]
+      },
+      {
+        "type": "submenu",
+        "path": "legal-stuff",
+        "label": "Legal Stuff",
+        "icon": "Shield",
+        "children": [
+          {
+            "type": "link",
+            "href": "#/terms-of-service.html",
+            "label": "Terms of Service",
+            "icon": "FileText",
+            "iframeUrl": "https://mypancho.com/account/pancho_terms-of-service.php"
+          },
+          {
+            "type": "link",
+            "href": "#/privacy-policy.html",
+            "label": "Privacy Policy",
+            "icon": "Eye",
+            "iframeUrl": "https://mypancho.com/account/pancho_privacy-policy.php"
+          },
+          {
+            "type": "link",
+            "href": "#/cookie-policy.html",
+            "label": "Cookie Policy",
+            "icon": "ShieldCheck",
+            "iframeUrl": "https://mypancho.com/account/pancho_cookie-policy.php"
+          }
+        ]
+      },
+      {
+        "type": "submenu",
+        "path": "information",
+        "label": "Information",
+        "icon": "Info",
+        "children": [
+          {
+            "type": "link",
+            "href": "#/faq.html",
+            "label": "FAQ",
+            "icon": "Book",
+            "iframeUrl": "https://mypancho.com/account/knowledgebase.php"
+          },
+          {
+            "type": "link",
+            "href": "#/announcements.html",
+            "label": "Announcements",
+            "icon": "Megaphone",
+            "iframeUrl": "https://mypancho.com/account/announcements"
+          },
+          {
+            "type": "link",
+            "href": "#/network-status.html",
+            "label": "Network Status",
+            "icon": "Signal",
+            "iframeUrl": "https://mypancho.com/account/serverstatus"
+          }
+        ]
+      }
+    ]
+  }
+}
