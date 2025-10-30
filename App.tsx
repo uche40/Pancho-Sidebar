@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import Sidebar from './components/Sidebar';
@@ -5,18 +6,29 @@ import { useLocation } from './hooks/useLocation';
 import { NavItem, NavLink } from './types';
 import { Menu } from 'lucide-react';
 
-// Helper function to find the navigation item by href, allowing for extra hash values
+/**
+ * Finds the most specific navigation item that matches the current URL hash.
+ * This allows for "deep linking" where the browser URL can contain both the
+ * application route and a hash for the iframe's internal routing.
+ * For example, if href is `#/clientarea.html#details` and a navLink has href `#/clientarea.html`,
+ * this function will correctly identify it as a match and return the remaining `#details` part.
+ * 
+ * @param navItems - The array of all navigation items from settings.
+ * @param href - The current URL hash from the browser's address bar.
+ * @returns An object containing the matched `navLink` and the leftover `iframeHash`, or undefined if no match is found.
+ */
 const findNavItemByHref = (navItems: NavItem[], href: string): { navLink: NavLink, iframeHash: string } | undefined => {
     let bestMatch: { navLink: NavLink, iframeHash:string } | undefined = undefined;
 
+    // Helper to check a single NavLink item
     const checkItem = (item: NavLink) => {
+        // Check if the current browser hash starts with the item's defined href.
         if (href.startsWith(item.href)) {
-            // Ensure this is not a partial match of a path segment (e.g. /foo matching /foobar)
-            // A valid match is either exact, or is followed by a '#' for the iframe's internal routing.
+            // This check prevents partial matches (e.g., `/foo` matching `/foobar`).
+            // A valid match is either exact or followed by a '#' for the iframe's hash.
             const nextChar = href[item.href.length];
             if (nextChar === undefined || nextChar === '#') {
-                // If we found a potential match, check if it's better than any previous one.
-                // A "better" match is a longer, more specific one.
+                // If this match is more specific (longer) than a previous match, it's better.
                 if (!bestMatch || item.href.length > bestMatch.navLink.href.length) {
                     const iframeHash = href.substring(item.href.length);
                     bestMatch = { navLink: item, iframeHash };
@@ -25,6 +37,7 @@ const findNavItemByHref = (navItems: NavItem[], href: string): { navLink: NavLin
         }
     };
     
+    // Iterate through all nav items, including those in submenus.
     for (const item of navItems) {
         if (item.type === 'link') {
             checkItem(item);
@@ -39,7 +52,12 @@ const findNavItemByHref = (navItems: NavItem[], href: string): { navLink: NavLin
 };
 
 
-// Helper function to find the first available linkable href from nav items.
+/**
+ * Finds the first available link in the navigation items to be used as the default page.
+ * This is used when the user navigates to the root of the application (`#/`).
+ * @param navItems - The array of all navigation items.
+ * @returns The href of the first found linkable item, or a fallback.
+ */
 const findDefaultHref = (navItems: NavItem[]): string => {
     for (const item of navItems) {
         if (item.type === 'link') {
@@ -49,10 +67,15 @@ const findDefaultHref = (navItems: NavItem[]): string => {
             return item.children[0].href;
         }
     }
-    return '#/'; // Fallback if no link is found
+    return '#/'; // Fallback route
 };
 
-// A hook to check for a media query match, used for responsive logic.
+/**
+ * A custom hook to monitor a CSS media query and return whether it matches.
+ * This is used to detect mobile vs. desktop viewports.
+ * @param query - The media query string (e.g., '(max-width: 767px)').
+ * @returns `true` if the query matches, `false` otherwise.
+ */
 const useMediaQuery = (query: string): boolean => {
     const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
 
@@ -60,17 +83,18 @@ const useMediaQuery = (query: string): boolean => {
         const mediaQuery = window.matchMedia(query);
         const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
         
+        // Add listener with backward compatibility for older browsers.
         try {
             mediaQuery.addEventListener('change', handler);
         } catch (e) {
-            mediaQuery.addListener(handler); // For older browsers
+            mediaQuery.addListener(handler); 
         }
         
         return () => {
             try {
                 mediaQuery.removeEventListener('change', handler);
             } catch (e) {
-                mediaQuery.removeListener(handler); // For older browsers
+                mediaQuery.removeListener(handler);
             }
         };
     }, [query]);
@@ -79,21 +103,30 @@ const useMediaQuery = (query: string): boolean => {
 };
 
 
+/**
+ * PageContent is responsible for rendering the main content area, which is
+ * typically an iframe pointing to a specific URL based on the current route.
+ * It handles security checks, parameter pass-through, and loading states.
+ */
 const PageContent: React.FC = () => {
-    const { hash } = useLocation();
-    const { settings } = useSettings();
+    const { hash } = useLocation(); // Gets the current URL hash (e.g., "#/my-services.html")
+    const { settings } = useSettings(); // Accesses the loaded application settings.
     const [finalIframeUrl, setFinalIframeUrl] = useState<string | null>(null);
     const [securityError, setSecurityError] = useState<string | null>(null);
     const [isIframeLoading, setIsIframeLoading] = useState(false);
 
-    // settings are guaranteed to be loaded by AppLayout
+    // Find the active navigation item based on the current URL hash.
     const navItems = settings!.sidebar.navItems;
-    const match = findNavItemByHref(navItems, hash === '#/' ? findDefaultHref(navItems) : hash);
+    const defaultHref = findDefaultHref(navItems);
+    const targetHash = hash === '#/' ? defaultHref : hash;
+    const match = findNavItemByHref(navItems, targetHash);
     const activeItem = match?.navLink;
-    const iframeHash = match?.iframeHash ?? '';
-    const iframeUrl = activeItem?.iframeUrl;
+    const iframeHash = match?.iframeHash ?? ''; // The part of the hash to pass to the iframe
+    const iframeUrl = activeItem?.iframeUrl; // The base URL for the iframe from settings.json
 
 
+    // This effect runs whenever the iframe URL or its hash changes.
+    // It constructs the final, secure URL and handles all logic related to it.
     useEffect(() => {
         if (!iframeUrl) {
             setFinalIframeUrl(null);
@@ -102,30 +135,25 @@ const PageContent: React.FC = () => {
             return;
         }
 
-        setIsIframeLoading(true); // Start loading indicator immediately
+        setIsIframeLoading(true);
 
         const isRelative = iframeUrl.startsWith('/') || iframeUrl.startsWith('./');
         let finalUrl: URL;
 
         try {
-            // Create a full URL object, using the window's origin as a base for relative URLs
             finalUrl = new URL(iframeUrl, window.location.origin);
         } catch (error) {
-            console.error("Invalid iframe URL in settings.json:", iframeUrl, error);
             setSecurityError('The configured iframe URL is invalid.');
             setFinalIframeUrl(null);
             setIsIframeLoading(false);
             return;
         }
 
-        // Security Check: Only applies to absolute URLs
+        // **Security Check**: For absolute URLs, ensure the hostname is in the allowed list.
         if (!isRelative) {
             const allowedDomains = settings?.security?.allowedIframeDomains ?? [];
             const hostname = finalUrl.hostname;
-
-            const isAllowed = allowedDomains.some(domain =>
-                hostname === domain || hostname.endsWith(`.${domain}`)
-            );
+            const isAllowed = allowedDomains.some(domain => hostname === domain || hostname.endsWith(`.${domain}`));
 
             if (!isAllowed) {
                 setSecurityError('For security reasons, only content from configured domains can be displayed.');
@@ -135,13 +163,13 @@ const PageContent: React.FC = () => {
             }
         }
 
-        // Parameter Pass-through: Append query params from main URL
+        // **Parameter Pass-through**: Append all query params from the main browser URL to the iframe URL.
         const mainPageParams = new URLSearchParams(window.location.search);
         mainPageParams.forEach((value, key) => {
             finalUrl.searchParams.append(key, value);
         });
 
-        // Append hash fragment from main URL to the iframe URL
+        // Append the specific hash fragment for the iframe.
         if (iframeHash) {
             finalUrl.hash = iframeHash;
         }
@@ -170,7 +198,7 @@ const PageContent: React.FC = () => {
                     </div>
                 )}
                 <iframe
-                    key={finalIframeUrl} // Add key to force re-render on URL change
+                    key={finalIframeUrl} // The key ensures the iframe re-mounts when the URL changes
                     src={finalIframeUrl}
                     className={`w-full h-full border-none transition-opacity duration-300 ${isIframeLoading ? 'opacity-0' : 'opacity-100'}`}
                     title={activeItem?.label || 'Content'}
@@ -181,7 +209,7 @@ const PageContent: React.FC = () => {
         );
     }
     
-    // Default content if no iframeUrl is specified
+    // Default content shown when no page is selected or the selected page has no iframeUrl.
     return (
         <div className="p-8">
             <h1 className="text-3xl font-bold text-primary">Welcome to your Dashboard</h1>
@@ -191,19 +219,26 @@ const PageContent: React.FC = () => {
     );
 }
 
+/**
+ * AppLayout is the main component that orchestrates the entire application layout.
+ * It manages the sidebar's state and responsiveness, applies the theme, and renders
+ * the main content area.
+ */
 const AppLayout: React.FC = () => {
     const { settings, loading } = useSettings();
     const isMobile = useMediaQuery('(max-width: 767px)');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { hash } = useLocation();
 
-    // Lift sidebar expanded state to manage layout from the top level
+    // The sidebar's expanded/collapsed state is "lifted" to this parent component.
+    // This allows the main content's layout to be adjusted when the sidebar changes width on desktop.
     const [isExpanded, setIsExpanded] = useState(false);
 
+    // Effect to initialize the sidebar state from localStorage or settings.json.
+    // This runs only once when settings are loaded and respects the device type (mobile vs. desktop).
     useEffect(() => {
         if (loading || !settings) return;
-
-        // Set initial state from localStorage or settings, but only on desktop
+        
         const savedState = localStorage.getItem("sidebarState");
         const initialState = savedState
             ? savedState === 'expanded'
@@ -212,30 +247,29 @@ const AppLayout: React.FC = () => {
         if (!isMobile) {
             setIsExpanded(initialState);
         } else {
-            setIsExpanded(false); // Sidebar is never "expanded" in the layout flow on mobile
+            setIsExpanded(false); // On mobile, the sidebar is an overlay and doesn't affect layout.
         }
     }, [loading, settings, isMobile]);
 
-    // Update local storage when isExpanded changes on desktop
+    // Effect to persist the sidebar state to localStorage whenever it changes on desktop.
     useEffect(() => {
         if (!isMobile) {
             localStorage.setItem("sidebarState", isExpanded ? 'expanded' : 'collapsed');
         }
     }, [isExpanded, isMobile]);
 
-    // Dynamically apply theme colors from settings
+    // Effect to apply the theme colors from settings as CSS custom properties on the root element.
+    // This makes the theme globally available to the Tailwind CSS configuration.
     useEffect(() => {
         if (settings?.theme) {
             const root = document.documentElement;
             Object.entries(settings.theme).forEach(([key, value]) => {
-                // FIX: The value from Object.entries on a JSON-derived object can be inferred
-                // as 'unknown'. Cast to string to ensure compatibility with setProperty.
                 root.style.setProperty(`--color-${key}`, value as string);
             });
         }
     }, [settings]);
 
-    // Close mobile menu on navigation
+    // Effect to automatically close the mobile menu overlay when the user navigates to a new page.
     useEffect(() => {
         if (isMobile) {
             setIsMobileMenuOpen(false);
@@ -261,6 +295,7 @@ const AppLayout: React.FC = () => {
 
     return (
         <div className="flex h-screen bg-secondary">
+            {/* The Sidebar component receives all necessary state and settings as props. */}
             <Sidebar
                 settings={settings.sidebar}
                 isMobile={isMobile}
@@ -270,6 +305,7 @@ const AppLayout: React.FC = () => {
                 setIsExpanded={setIsExpanded}
             />
             <div className="relative flex flex-col flex-1 w-full transition-all duration-300 ease-in-out">
+                 {/* The mobile header with the hamburger menu is only rendered on mobile screens. */}
                  {isMobile && (
                     <header className="absolute top-0 left-0 right-0 flex items-center justify-end p-4 z-10">
                         <button onClick={() => setIsMobileMenuOpen(true)} className="p-1.5 rounded-lg hover:bg-muted" aria-label="Open menu">
@@ -286,6 +322,10 @@ const AppLayout: React.FC = () => {
 };
 
 
+/**
+ * The root App component. It wraps the entire application with the SettingsProvider
+ * to make the settings and loading state available to all child components.
+ */
 const App: React.FC = () => {
     return (
         <SettingsProvider>

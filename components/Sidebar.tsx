@@ -1,9 +1,12 @@
+
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { SidebarSettings } from '../types';
 import SidebarItem from './SidebarItem';
 import Icon from './Icon';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+// Create a context to provide the sidebar's expanded state to child components (like SidebarItem).
+// This avoids "prop drilling" the isExpanded state through multiple layers.
 const SidebarContext = createContext({ isExpanded: false });
 
 interface SidebarProps {
@@ -15,6 +18,10 @@ interface SidebarProps {
     setIsExpanded: (isExpanded: boolean) => void;
 }
 
+/**
+ * The main Sidebar component. It handles its own internal state (like open submenus)
+ * and renders itself differently based on whether the view is mobile or desktop.
+ */
 const Sidebar: React.FC<SidebarProps> = ({
     settings,
     isMobile,
@@ -23,9 +30,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     isExpanded,
     setIsExpanded
 }) => {
-    // Hover state is only for desktop collapsed view
+    // State to track if the mouse is hovering over the sidebar.
+    // This is only used on desktop when the sidebar is collapsed to enable the "hover-to-expand" feature.
     const [isHovering, setIsHovering] = useState(false);
     
+    // State to keep track of which submenus are currently open.
+    // It's initialized from localStorage to persist the user's choices across page loads.
     const [openSubmenus, setOpenSubmenus] = useState<Set<string>>(() => {
         if (typeof window !== 'undefined') {
             const savedSubmenus = localStorage.getItem("openSubmenus");
@@ -34,10 +44,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         return new Set();
     });
 
+    // Effect to save the open submenus to localStorage whenever the state changes.
     useEffect(() => {
         localStorage.setItem("openSubmenus", JSON.stringify(Array.from(openSubmenus)));
     }, [openSubmenus]);
 
+    // Toggles the open/closed state of a specific submenu.
     const toggleSubmenu = (path: string) => {
         setOpenSubmenus(prev => {
             const newSet = new Set(prev);
@@ -50,9 +62,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         });
     };
 
-    // Determines if text labels and other "expanded" content should be visible
+    // This variable determines if the sidebar's text content should be visible.
+    // On mobile, it's always true (the sidebar is either fully visible or not at all).
+    // On desktop, it's true if the sidebar is pinned open (`isExpanded`) OR if it's being hovered over.
     const isEffectivelyExpanded = isMobile ? true : (isExpanded || (isHovering && !isExpanded));
 
+    // The shared JSX for the navigation items and the profile section.
     const sidebarContent = (
         <>
             <nav className="flex-1 px-3 overflow-y-auto overflow-x-hidden">
@@ -69,9 +84,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div
                 className="border-t border-border flex p-3 cursor-pointer hover:bg-muted"
                 onClick={() => {
+                    // Navigate to the profile page when clicked.
                     window.location.hash = settings.profile.href;
-                    // Also close mobile menu if it's open
-                    if (isMobile) setIsMobileMenuOpen(false);
+                    if (isMobile) setIsMobileMenuOpen(false); // Close mobile menu on navigation.
                 }}
             >
                 <div className="w-10 h-10 rounded-md bg-primary flex items-center justify-center flex-shrink-0">
@@ -88,10 +103,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         </>
     );
 
+    // --- Mobile Rendering ---
+    // On mobile, the sidebar is a fixed-position overlay that slides in from the left.
     if (isMobile) {
         return (
             <SidebarContext.Provider value={{ isExpanded: true }}>
-                {/* Overlay */}
+                {/* Backdrop overlay */}
                 <div
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`fixed inset-0 bg-black/30 z-30 transition-opacity duration-300 md:hidden
@@ -124,7 +141,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         );
     }
 
-    // Desktop Sidebar
+    // --- Desktop Rendering ---
+    // On desktop, the sidebar is part of the main layout flow and can be collapsed or expanded.
     return (
         <SidebarContext.Provider value={{ isExpanded: isEffectivelyExpanded }}>
             <aside
@@ -152,6 +170,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
 };
 
+/**
+ * A custom hook to easily access the sidebar's context (i.e., its expanded state).
+ */
 export const useSidebar = () => useContext(SidebarContext);
 
 export default Sidebar;

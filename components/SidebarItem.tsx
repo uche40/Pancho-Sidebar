@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavItem } from '../types';
 import { useSidebar } from './Sidebar';
@@ -8,14 +9,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface SidebarItemProps {
     item: NavItem;
-    isOpen?: boolean;
-    onToggle?: () => void;
+    isOpen?: boolean;   // For submenus, is it currently open?
+    onToggle?: () => void; // Function to call to toggle a submenu
 }
 
+/**
+ * Renders a single item in the sidebar. This component is polymorphic and can render
+ * a header, a direct link, or a collapsible submenu based on the `item.type` prop.
+ */
 const SidebarItem: React.FC<SidebarItemProps> = ({ item, isOpen, onToggle }) => {
+    // `isExpanded` is consumed from the Sidebar's context. This determines if text labels should be visible.
     const { isExpanded } = useSidebar();
+    // `hash` is the current URL hash, used to determine if a link is active.
     const { hash } = useLocation();
 
+    // --- Render a Header ---
     if (item.type === 'header') {
         return (
             <h3 className={`
@@ -28,6 +36,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isOpen, onToggle }) => 
         );
     }
     
+    // --- Render a simple Link ---
     if (item.type === 'link') {
         const isActive = hash === item.href;
         return (
@@ -37,8 +46,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isOpen, onToggle }) => 
                     relative flex items-center p-2 my-2.5 font-medium rounded-md cursor-pointer
                     transition-colors group
                     ${isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'hover:bg-muted text-secondary-foreground/80 hover:text-secondary-foreground'
+                        ? 'bg-primary/10 text-primary' // Active state styles
+                        : 'hover:bg-muted text-secondary-foreground/80 hover:text-secondary-foreground' // Default state styles
                     }
                 `}
             >
@@ -46,6 +55,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isOpen, onToggle }) => 
                 <span className={`whitespace-nowrap ml-3 transition-opacity duration-200 ease-out ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                     {item.label}
                 </span>
+                {/* Tooltip for collapsed desktop sidebar */}
                 {!isExpanded && (
                     <div className={`
                         absolute left-full rounded-md px-2 py-1 ml-2
@@ -62,7 +72,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isOpen, onToggle }) => 
         );
     }
 
+    // --- Render a Submenu ---
     if (item.type === 'submenu') {
+        // A submenu is considered "active" if any of its child links are active.
         const isChildActive = item.children.some(child => child.href === hash);
         return (
             <>
@@ -81,6 +93,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isOpen, onToggle }) => 
                     <span className={`flex-1 whitespace-nowrap ml-3 transition-opacity duration-200 ease-out ${isExpanded ? 'opacity-100' : 'opacity-0'}`}>
                         {item.label}
                     </span>
+                    {/* Animated chevron icon using Framer Motion */}
                     <AnimatePresence>
                       {isExpanded && (
                         <motion.div
@@ -93,6 +106,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isOpen, onToggle }) => 
                         </motion.div>
                       )}
                     </AnimatePresence>
+                     {/* Tooltip for collapsed desktop sidebar */}
                      {!isExpanded && (
                         <div className={`
                             absolute left-full rounded-md px-2 py-1 ml-2
@@ -106,6 +120,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isOpen, onToggle }) => 
                         </div>
                     )}
                 </div>
+                {/* Collapsible content for the submenu */}
                 <AnimatePresence>
                     {isOpen && isExpanded && (
                         <motion.div
@@ -130,6 +145,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ item, isOpen, onToggle }) => 
                                             }
                                         `}
                                     >
+                                        {/* Active indicator bar */}
                                         <div className={`absolute left-0 h-full w-0.5 ${isActive ? 'bg-primary' : ''}`} />
                                         <Icon name={child.icon} size={16} className="mr-3 flex-shrink-0"/>
                                         <span>{child.label}</span>
